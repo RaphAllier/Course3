@@ -54,8 +54,7 @@
   			var g = svg.selectAll("g")
   			.data(ByDate)
   			.enter()
-  			.append("g")
-  			.attr("class","ByDate")
+  			.append("g");
 
 
 			var color = d3.scaleOrdinal()
@@ -80,7 +79,7 @@
 			    .range([height/1.5,0]);
 
 
-  				g.each(function(p,j) {
+  				g.each(function(p) {
 
   					d3.select(this)
   					.selectAll("rect")
@@ -93,8 +92,42 @@
   					.attr("height",function(d) {return y(d.price);})
   					.style("fill",function(d) {return color(d.symbol);});
 
-  				})
-  				
+  				})}
+
+
+
+  			function stackedBar() {
+  				var keys = ByDate.map(function(d) {return d.key});
+
+				var x = d3.scaleBand()
+				.domain(ByDate.map(function(d){return d.key}))
+				.range([0,width]);
+
+
+
+
+				g2 = svg.selectAll("g")
+  				.data(d3.stack().keys(keys)(ByDate))
+  				.enter()
+  				.append("g");
+
+
+  				g.each(function(p) {
+  				console.log(p)
+  				d3.select(this)
+  				.style("fill",function (d) {return color(d.symbol)})
+  				.selectAll("rect")
+  				.data(function(d) {return d.values})
+  				.enter()
+  				.append("rect")
+  				.attr("x", function(d) { return x(p.key); })
+			    .attr("y", function(d) { return y(d[1]); })
+			    .attr("height", function(d) { return y(d[0]) - y(d[1]); })
+			    .attr("width", x.bandwidth());
+
+			})
+
+
   			}
 
   			groupedBar();
