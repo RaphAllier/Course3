@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Bar charts everywhere</title>
+        <script type="text/javascript" src="d3/d3.js"></script>
+        <style type="text/css">
+          
+
+
+        </style>
+    </head>
+    <body>
+        <script type="text/javascript">
+
+
+        	var margin = {top: 20, right: 20, bottom: 30, left: 40};
+			var width = 960 - margin.left - margin.right;
+			var height = 500 - margin.top - margin.bottom;
+
+        	// Create svg canvas
+
+			var svg = d3.select("body")
+			.append("svg")
+			.attr("width",width+margin.left+margin.right)
+			.attr("height",height+margin.bottom+margin.top)
+			.append("g")
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+            // Loading data
+
+            var stocks;
+            var ByDate;
+
+            d3.csv("stocks.csv", function(data) {
+
+            // Create var to parse the date
+            var parseDate = d3.timeParse("%m-%Y");
+  
+  			// stock values by date
+
+  			ByDate = d3.nest()
+  			.key(function(d){ return d.date})
+  			.entries(stocks=data);
+
+  			// Parses date and numbers, compute maximum and sum for later
+  			ByDate.forEach(function(s) {
+  				// Parses dates and numbers
+			    s.values.forEach(function(d) { d.date = parseDate(d.date); d.price = +d.price; });
+		   		s.maxPrice = d3.max(s.values, function(d) { return d.price; });
+			    /*s.sumPrice = d3.sum(s.values, function(d) { return d.price; });*/
+			  });
+
+  			var g = svg.selectAll("g")
+  			.data(ByDate)
+  			.enter()
+  			.append("g")
+  			.attr("class","ByDate")
+
+
+			var color = d3.scaleOrdinal()
+			    .range(["#98abc5", "#7b6888", "#a05d56", "#d0743c", "#ff8c00"]);
+
+
+  			function groupedBar() {
+
+  				// Define scales
+  				// Scale for the position based on the date
+				var x0 = d3.scaleBand()
+				.domain(ByDate.map(function(d){return d.key}))
+				.range([0,width]);
+
+				// Scale for the position based on the date
+				var x1 = d3.scaleBand()
+			    .domain(ByDate[0].values.map(function(d) {return d.symbol}))
+			    .range([0,x0.bandwidth()-1]);
+			    // Scale for the y position of the bar
+				var y = d3.scaleLinear()
+				.domain([0,d3.max(ByDate.map(function(d) {return d.maxPrice}))])
+			    .range([height/1.5,0]);
+
+
+  				g.each(function(p,j) {
+
+  					d3.select(this)
+  					.selectAll("rect")
+  					.data(function(d) { return d.values;})
+  					.enter()
+  					.append("rect")
+  					.attr("x", function(d) {return x1(d.symbol)+x0(p.key);})
+  					.attr("y",function(d) {return height/1.5-y(d.price);})
+  					.attr("width",x1.bandwidth())
+  					.attr("height",function(d) {return y(d.price);})
+  					.style("fill",function(d) {return color(d.symbol);});
+
+  				})
+  				
+  			}
+
+  			groupedBar();
+
+
+            });
+
+        </script>
+    </body>
+</html>
